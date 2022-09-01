@@ -1,0 +1,69 @@
+schemaVersion: 2.1.0
+metadata:
+  name: che-test-cpp2
+components:
+  - attributes:
+      app.kubernetes.io/name: tools
+      che-theia.eclipse.org/vscode-extensions:
+        - 'http://192.168.0.127:8888/cdt-vscode-0.0.7-75cf95.vsix'
+        - 'http://192.168.0.127:8888/cdt-gdb-vscode-0.0.91-2cbbb8.vsix'
+        - 'http://192.168.0.127:8888/vscode-clangd-0.1.5-562d00.vsix'
+    container:
+      args:
+        - sh
+        - '-c'
+        - '${PLUGIN_REMOTE_ENDPOINT_EXECUTABLE}'
+      image: 'quay.io/devfile/universal-developer-image:ubi8-0e189d9'
+      memoryLimit: 1G
+      mountSources: true
+      sourceMapping: /projects
+      volumeMounts:
+      - name: remote-endpoint
+        path: /remote-endpoint
+      - name: plugins
+        path: /plugins
+      env:
+        - name: PLUGIN_REMOTE_ENDPOINT_EXECUTABLE
+          value: /remote-endpoint/plugin-remote-endpoint
+        - name: THEIA_PLUGINS
+          value: 'local-dir:///plugins/sidecars/tools'
+        - name: CHE_DASHBOARD_URL
+          value: 'https://che-dev.ks.x'
+        - name: CHE_PLUGIN_REGISTRY_URL
+          value: 'https://che-dev.ks.x/plugin-registry/v3'
+        - name: CHE_PLUGIN_REGISTRY_INTERNAL_URL
+          value: 'http://plugin-registry.eclipse-che.svc:8080/v3'
+    name: tools
+commands:
+  - exec:
+      commandLine: go get -d && go run main.go
+      component: tools
+      group:
+        kind: run
+      label: 1.1 Run outyet
+      workingDir: '${PROJECT_SOURCE}/outyet'
+    id: run-outyet
+  - exec:
+      commandLine: kill $(pidof go)
+      component: tools
+      group:
+        kind: run
+      label: 1.2 Stop outyet
+    id: stop-outyet
+  - exec:
+      commandLine: go test
+      component: tools
+      group:
+        kind: test
+      label: 1.3 Test outyet
+      workingDir: '${PROJECT_SOURCE}/outyet'
+    id: test-outyet
+  - exec:
+      commandLine: 'go get -d && go run ${file}'
+      component: tools
+      group:
+        kind: run
+      label: Run current file
+      workingDir: '${fileDirname}'
+    id: run-current-file
+
